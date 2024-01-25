@@ -224,8 +224,12 @@ class WebcamModule(retico_core.AbstractProducingModule):
             if self.pil:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 frame = Image.fromarray(frame)
+                frame2 = np.asarray(frame)
+                cv2.imwrite("./test_webcam_img.jpg", frame2)
             output_iu.set_image(frame, 1, self.rate)
             return retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD)
+            # um = retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD)
+            # self.append(um)
         else:
             print('camera may not be on')
 
