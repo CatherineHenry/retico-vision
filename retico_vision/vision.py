@@ -1,3 +1,4 @@
+from datetime import datetime
 
 import cv2
 import numpy as np
@@ -342,7 +343,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
         self.keepmask = keepmask
 
     def process_update(self, update_message):
-        print("extracting objects")
+        print("Extracting objects")
         for iu, ut in update_message:
             if ut != retico_core.UpdateType.ADD:
                 continue
@@ -352,7 +353,8 @@ class ExtractObjectsModule(retico_core.AbstractModule):
 
                 img_dict = iu.get_json()
                 image = iu.image
-
+                # image = cv2.cvtColor(image, cv2.COLOR_RGB2RGBA)
+                image = image.convert('RGBA')
                 obj_type = img_dict['object_type']
                 num_objs = img_dict['num_objects']
                 # print(f"Num Objects in Vsison: {num_objs}")
@@ -374,15 +376,22 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 elif obj_type == 'seg':
                     valid_segs = img_dict['detected_objects']
                     for i in range(num_objs):
-                        res_image = Image.fromarray(self.extract_seg_object(sam_image, valid_segs[i]))
+                        extracted = self.extract_seg_object(sam_image, valid_segs[i])
+                        if extracted is None:
+                            res_image = None
+                        else:
+                            res_image = Image.fromarray(extracted)#.convert('RGB')
                         image_objects[f'object_{i+1}'] = res_image
                     output_iu.set_extracted_objects(image, image_objects, num_objs, obj_type)
                 else: 
                     print('Object type is invalid. Can\'t retrieve segmented object.')
                     exit()
-
+                if len(image_objects.keys()) == 0:
+                    print("No images with object")
+                    um = retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD)
+                    self.append(um)
                 # print(image_objects)
-
+                plt.clf()
                 num_rows = math.ceil(self.num_obj_to_display / 3)
                 if self.num_obj_to_display < 3:
                     num_cols = self.num_obj_to_display
@@ -393,6 +402,8 @@ class ExtractObjectsModule(retico_core.AbstractModule):
 
                 for i in range(self.num_obj_to_display):
                     res_image = image_objects[f'object_{i+1}']
+                    if res_image is None:
+                        continue
                     axs[i].imshow(res_image)
                     axs[i].set_title(f'Object {i+1}')
                 
@@ -402,13 +413,15 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 folder_name = "extracted_objects"
                 if not os.path.exists(folder_name):
                     os.makedirs(folder_name)
-                
+
                 plt.tight_layout()
-                save_path = os.path.join(folder_name, f'top_{self.num_obj_to_display}_extracted_objs.png')
+                save_path = os.path.join(folder_name, f'top_extrct_objs_{datetime.now().strftime("%m-%d_%H-%M-%S")}.png')
                 plt.savefig(save_path)
+                plt.close('all')
 
 
                 # Print possible objects that could have been saved
+                plt.clf()
                 num_rows = math.ceil(num_objs / 3)
                 if num_objs < 3:
                     num_cols = num_objs
@@ -419,6 +432,8 @@ class ExtractObjectsModule(retico_core.AbstractModule):
 
                 for i in range(num_objs):
                     res_image = image_objects[f'object_{i+1}']
+                    if res_image is None:
+                        continue
                     axs[i].imshow(res_image)
                     axs[i].set_title(f'Object {i+1}')
 
@@ -430,8 +445,9 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                     os.makedirs(folder_name)
 
                 plt.tight_layout()
-                save_path = os.path.join(folder_name, f'all_possible_{num_objs}_extracted_objs.png')
+                save_path = os.path.join(folder_name, f'all_extrct_objs_{datetime.now().strftime("%m-%d_%H-%M-%S")}.png')
                 plt.savefig(save_path)
+                plt.close('all')
 
 
             um = retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD) 
@@ -439,7 +455,14 @@ class ExtractObjectsModule(retico_core.AbstractModule):
 
     def extract_seg_object(self, image, seg):
         ret_image = image.copy()
-        ret_image[seg==False] = [255, 255, 255]
+        ret_image[seg==True] = [255,255,255,0]
+        avg_color_per_row = np.average(ret_image, axis=0)
+        avg_color = np.average(avg_color_per_row, axis=0)
+        avg_avg = np.average(avg_color, axis=0)
+        print(f"avg of seg obj is: {avg_avg}")
+        if avg_avg >= 200:
+            return None
+        # ret_image[seg==True] = [255, 255, 255]
         return ret_image
     
     def extract_bb_object(self, image, bbox):
