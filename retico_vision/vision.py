@@ -341,6 +341,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
         self.keepmask = keepmask
 
     def process_update(self, update_message):
+        print("extracting objects")
         for iu, ut in update_message:
             if ut != retico_core.UpdateType.ADD:
                 continue
@@ -404,6 +405,33 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 plt.tight_layout()
                 save_path = os.path.join(folder_name, f'top_{self.num_obj_to_display}_extracted_objs.png')
                 plt.savefig(save_path)
+
+
+                # Print possible objects that could have been saved
+                num_rows = math.ceil(num_objs / 3)
+                if num_objs < 3:
+                    num_cols = num_objs
+                else:
+                    num_cols = 3
+                fig, axs = plt.subplots(num_rows, num_cols, figsize=(12, 4*num_rows)) #need to adjust to have matching columsn and rows to fit num_obj_to_display
+                axs = axs.ravel() if isinstance(axs, np.ndarray) else [axs]
+
+                for i in range(num_objs):
+                    res_image = image_objects[f'object_{i+1}']
+                    axs[i].imshow(res_image)
+                    axs[i].set_title(f'Object {i+1}')
+
+                for j in range(num_objs, num_rows * num_cols):
+                    axs[j].axis('off')
+
+                folder_name = "possible_extracted_objects"
+                if not os.path.exists(folder_name):
+                    os.makedirs(folder_name)
+
+                plt.tight_layout()
+                save_path = os.path.join(folder_name, f'all_possible_{num_objs}_extracted_objs.png')
+                plt.savefig(save_path)
+
 
             um = retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD) 
             self.append(um)
