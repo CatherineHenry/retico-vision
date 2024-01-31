@@ -435,7 +435,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                     for i in range(num_objs):
                         extracted = self.extract_seg_object(sam_image, valid_segs[i])
                         if extracted is None:
-                            res_image = None
+                            continue
                         else:
                             res_image = Image.fromarray(extracted).convert('RGB')
                         image_objects[f'object_{i+1}'] = res_image
@@ -443,71 +443,74 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 else: 
                     print('Object type is invalid. Can\'t retrieve segmented object.')
                     exit()
+                # if all(value is None for value in image_objects.values()):
                 if len(image_objects.keys()) == 0:
                     print(f"No images with object [{iu.flow_uuid}]")
-                    um = retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD)
-                    self.append(um)
+                    output_iu.set_extracted_objects(image, [], 0, obj_type)
+                    # um = retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD)
+                    # self.append(um)
                 # print(image_objects)
-                plt.clf()
-                num_rows = math.ceil(self.num_obj_to_display / 3)
-                if self.num_obj_to_display < 3:
-                    num_cols = self.num_obj_to_display
                 else:
-                    num_cols = 3
-                fig, axs = plt.subplots(num_rows, num_cols, figsize=(12, 4*num_rows)) #need to adjust to have matching columsn and rows to fit num_obj_to_display
-                axs = axs.ravel() if isinstance(axs, np.ndarray) else [axs]
+                    plt.clf()
+                    num_rows = math.ceil(self.num_obj_to_display / 3)
+                    if self.num_obj_to_display < 3:
+                        num_cols = self.num_obj_to_display
+                    else:
+                        num_cols = 3
+                    fig, axs = plt.subplots(num_rows, num_cols, figsize=(12, 4*num_rows)) #need to adjust to have matching columsn and rows to fit num_obj_to_display
+                    axs = axs.ravel() if isinstance(axs, np.ndarray) else [axs]
 
-                for i in range(self.num_obj_to_display):
-                    res_image = image_objects[f'object_{i+1}']
-                    if res_image is None:
-                        continue
-                    axs[i].imshow(res_image)
-                    axs[i].set_title(f'Object {i+1}')
-                
-                for j in range(self.num_obj_to_display, num_rows * num_cols):
-                    axs[j].axis('off')
+                    for idx, i in enumerate(image_objects.keys()):
+                        res_image = image_objects[i]
+                        if res_image is None:
+                            continue
+                        axs[idx].imshow(res_image)
+                        axs[idx].set_title(i)
 
-                folder_name = "extracted_objects"
-                if not os.path.exists(folder_name):
-                    os.makedirs(folder_name)
+                    for j in range(self.num_obj_to_display, num_rows * num_cols):
+                        axs[j].axis('off')
 
-
-                plt.tight_layout()
-                path = Path(f"{self.base_filepath}/{obj_type}/{iu.execution_uuid}/top_n_extracted/")
-                path.mkdir(parents=True, exist_ok=True)
-                file_name = f"{iu.flow_uuid}.png" # TODO: png or jpg better?
-                imwrite_path = f"{str(path)}/{file_name}"
-                plt.savefig(imwrite_path)
-                plt.close('all')
+                    folder_name = "extracted_objects"
+                    if not os.path.exists(folder_name):
+                        os.makedirs(folder_name)
 
 
-                # Print possible objects that could have been saved
-                plt.clf()
-                num_rows = math.ceil(num_objs / 3)
-                if num_objs < 3:
-                    num_cols = num_objs
-                else:
-                    num_cols = 3
-                fig, axs = plt.subplots(num_rows, num_cols, figsize=(12, 4*num_rows)) #need to adjust to have matching columsn and rows to fit num_obj_to_display
-                axs = axs.ravel() if isinstance(axs, np.ndarray) else [axs]
+                    plt.tight_layout()
+                    path = Path(f"{self.base_filepath}/{obj_type}/{iu.execution_uuid}/top_n_extracted/")
+                    path.mkdir(parents=True, exist_ok=True)
+                    file_name = f"{iu.flow_uuid}.png" # TODO: png or jpg better?
+                    imwrite_path = f"{str(path)}/{file_name}"
+                    plt.savefig(imwrite_path)
+                    plt.close('all')
 
-                for i in range(num_objs):
-                    res_image = image_objects[f'object_{i+1}']
-                    if res_image is None:
-                        continue
-                    axs[i].imshow(res_image)
-                    axs[i].set_title(f'Object {i+1}')
 
-                for j in range(num_objs, num_rows * num_cols):
-                    axs[j].axis('off')
+                    # Print possible objects that could have been saved
+                    plt.clf()
+                    num_rows = math.ceil(num_objs / 3)
+                    if num_objs < 3:
+                        num_cols = num_objs
+                    else:
+                        num_cols = 3
+                    fig, axs = plt.subplots(num_rows, num_cols, figsize=(12, 4*num_rows)) #need to adjust to have matching columsn and rows to fit num_obj_to_display
+                    axs = axs.ravel() if isinstance(axs, np.ndarray) else [axs]
 
-                plt.tight_layout()
-                path = Path(f"{self.base_filepath}/{obj_type}/{iu.execution_uuid}/all_possible/")
-                path.mkdir(parents=True, exist_ok=True)
-                file_name = f"{iu.flow_uuid}.png" # TODO: png or jpg better?
-                imwrite_path = f"{str(path)}/{file_name}"
-                plt.savefig(imwrite_path)
-                plt.close('all')
+                    for idx, i in enumerate(image_objects.keys()):
+                        res_image = image_objects[i]
+                        if res_image is None:
+                            continue
+                        axs[idx].imshow(res_image)
+                        axs[idx].set_title(i)
+
+                    for j in range(num_objs, num_rows * num_cols):
+                        axs[j].axis('off')
+
+                    plt.tight_layout()
+                    path = Path(f"{self.base_filepath}/{obj_type}/{iu.execution_uuid}/all_possible/")
+                    path.mkdir(parents=True, exist_ok=True)
+                    file_name = f"{iu.flow_uuid}.png" # TODO: png or jpg better?
+                    imwrite_path = f"{str(path)}/{file_name}"
+                    plt.savefig(imwrite_path)
+                    plt.close('all')
 
             output_iu.set_flow_uuid(iu.flow_uuid)
             output_iu.set_execution_uuid(iu.execution_uuid)
@@ -522,7 +525,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
         avg_color = np.average(avg_color_per_row, axis=0)
         avg_avg = np.average(avg_color, axis=0)
         print(f"avg of seg obj is: {avg_avg}")
-        if avg_avg >= 200:
+        if avg_avg >= 200: #TODO: figure out a good threshold
             return None
         # ret_image[seg==True] = [255, 255, 255]
         return ret_image
