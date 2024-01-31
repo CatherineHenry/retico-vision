@@ -87,6 +87,9 @@ class ImageIU(retico_core.IncrementalUnit):
         self.payload = self.image
         self.nframes = json_dict['nframes']
         self.rate = json_dict['rate']
+        self.flow_uuid = json_dict['flow_uuid']
+        self.execution_uuid = json_dict['execution_uuid']
+        self.motor_action = np.array(json_dict['motor_action'])
 
 class DetectedObjectsIU(retico_core.IncrementalUnit):
     """An image incremental unit that maintains a list of detected objects and their bounding boxes.
