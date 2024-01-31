@@ -406,7 +406,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
             else:
                 image_objects = {}
                 output_iu = self.create_iu(iu)
-                print(f"Extracting objects {iu.flow_uuid}")
+                print(f"Extracting objects [{iu.flow_uuid}]")
 
                 img_dict = iu.get_json()
                 image = iu.image
