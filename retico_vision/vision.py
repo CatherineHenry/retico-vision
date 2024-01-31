@@ -437,14 +437,14 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                         if extracted is None:
                             res_image = None
                         else:
-                            res_image = Image.fromarray(extracted)#.convert('RGB')
+                            res_image = Image.fromarray(extracted).convert('RGB')
                         image_objects[f'object_{i+1}'] = res_image
                     output_iu.set_extracted_objects(image, image_objects, num_objs, obj_type)
                 else: 
                     print('Object type is invalid. Can\'t retrieve segmented object.')
                     exit()
                 if len(image_objects.keys()) == 0:
-                    print("No images with object")
+                    print(f"No images with object [{iu.flow_uuid}]")
                     um = retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD)
                     self.append(um)
                 # print(image_objects)
