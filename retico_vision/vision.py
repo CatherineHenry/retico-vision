@@ -396,11 +396,10 @@ class ExtractObjectsModule(retico_core.AbstractModule):
         self.num_obj_to_display = num_obj_to_display
         self.show = show
         self.keepmask = keepmask
-        self.base_filepath = './extracted_objects'
+        self.base_filepath = './extraction_output'
 
     # TODO: Catherine, no queue for this Module?
     def process_update(self, update_message):
-        print("Extracting objects")
         for iu, ut in update_message:
             if ut != retico_core.UpdateType.ADD:
                 continue
