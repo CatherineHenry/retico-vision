@@ -125,6 +125,8 @@ class DetectedObjectsIU(retico_core.IncrementalUnit):
         self.detected_objects = None
         self.num_objects = 0
         self.object_type = None
+        self.flow_uuid = None
+        self.motor_action = None
 
     def set_detected_objects(self, image, detected_objects, object_type):
         """Sets the content for the IU"""
@@ -140,6 +142,8 @@ class DetectedObjectsIU(retico_core.IncrementalUnit):
         payload['detected_objects'] = self.detected_objects
         payload['num_objects'] = self.num_objects
         payload['object_type'] = self.object_type
+        payload['flow_uuid'] = self.flow_uuid
+        payload['motor_action'] = self.motor_action.tolist()
         return payload
 
     def create_from_json(self, json_dict):
@@ -147,6 +151,14 @@ class DetectedObjectsIU(retico_core.IncrementalUnit):
         self.detected_objects = json_dict['detected_objects']
         self.payload = self.detected_objects
         self.num_objects = json_dict['num_objects']
+        self.flow_uuid = json_dict['flow_uuid']
+        self.motor_action = np.array(json_dict['motor_action'])
+
+    def set_flow_uuid(self, flow_uuid):
+        self.flow_uuid = flow_uuid
+
+    def set_motor_action(self, motor_action):
+        self.motor_action = motor_action
 
 class ObjectFeaturesIU(retico_core.IncrementalUnit):
     """An image incremental unit that maintains a list of feature vectors for detected objects in a scene.
