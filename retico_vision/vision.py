@@ -200,6 +200,18 @@ class ObjectFeaturesIU(retico_core.IncrementalUnit):
         self.object_features = None
         self.num_objects = 0
         self.image = None
+        self.flow_uuid = None
+        self.execution_uuid = None
+        self.motor_action = None
+
+    def set_flow_uuid(self, flow_uuid):
+        self.flow_uuid = flow_uuid
+
+    def set_execution_uuid(self, execution_uuid):
+        self.execution_uuid = execution_uuid
+
+    def set_motor_action(self, motor_action):
+        self.motor_action = motor_action
 
     def set_object_features(self, image, object_features):
         """Sets the content of the IU."""
@@ -214,6 +226,9 @@ class ObjectFeaturesIU(retico_core.IncrementalUnit):
         payload['image'] = np.array(self.image).tolist()
         payload['object_features'] = self.object_features
         payload['num_objects'] = self.num_objects
+        payload['flow_uuid'] = self.flow_uuid
+        payload['motor_action'] = self.motor_action.tolist()
+        payload['execution_uuid'] = self.execution_uuid
         return payload
 
     def create_from_json(self, json_dict):
@@ -221,6 +236,9 @@ class ObjectFeaturesIU(retico_core.IncrementalUnit):
         self.object_features = json_dict['object_features']
         self.payload = json_dict['object_features']
         self.num_objects = json_dict['num_objects']
+        self.flow_uuid = json_dict['flow_uuid']
+        self.motor_action = np.array(json_dict['motor_action'])
+        self.execution_uuid = json_dict['execution_uuid']
 
 class WebcamModule(retico_core.AbstractProducingModule):
     """A module that produces IUs containing images that are captures by
