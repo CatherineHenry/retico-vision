@@ -127,6 +127,7 @@ class DetectedObjectsIU(retico_core.IncrementalUnit):
         self.num_objects = 0
         self.object_type = None
         self.flow_uuid = None
+        self.execution_uuid = None
         self.motor_action = None
 
     def set_detected_objects(self, image, detected_objects, object_type):
@@ -144,6 +145,7 @@ class DetectedObjectsIU(retico_core.IncrementalUnit):
         payload['num_objects'] = self.num_objects
         payload['object_type'] = self.object_type
         payload['flow_uuid'] = self.flow_uuid
+        payload['execution_uuid'] = self.execution_uuid
         payload['motor_action'] = self.motor_action.tolist()
         return payload
 
@@ -153,10 +155,14 @@ class DetectedObjectsIU(retico_core.IncrementalUnit):
         self.payload = self.detected_objects
         self.num_objects = json_dict['num_objects']
         self.flow_uuid = json_dict['flow_uuid']
+        self.execution_uuid = json_dict['execution_uuid']
         self.motor_action = np.array(json_dict['motor_action'])
 
     def set_flow_uuid(self, flow_uuid):
         self.flow_uuid = flow_uuid
+
+    def set_execution_uuid(self, execution_uuid):
+        self.execution_uuid = execution_uuid
 
     def set_motor_action(self, motor_action):
         self.motor_action = motor_action
@@ -486,6 +492,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 plt.close('all')
 
             output_iu.set_flow_uuid(iu.flow_uuid)
+            output_iu.set_execution_uuid(iu.execution_uuid)
             output_iu.set_motor_action(iu.motor_action)
             um = retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD) 
             self.append(um)
@@ -564,10 +571,14 @@ class ExtractedObjectsIU(retico_core.IncrementalUnit):
         self.object_type = None
         self.extracted_objects = {}
         self.flow_uuid = None
+        self.execution_uuid = None
         self.motor_action = None
 
     def set_flow_uuid(self, flow_uuid):
         self.flow_uuid = flow_uuid
+
+    def set_execution_uuid(self, execution_uuid):
+        self.execution_uuid = execution_uuid
 
     def set_motor_action(self, motor_action):
         self.motor_action = motor_action
@@ -588,6 +599,7 @@ class ExtractedObjectsIU(retico_core.IncrementalUnit):
         payload['segmented_objects_dictionary'] = self.extracted_objects
         payload['flow_uuid'] = self.flow_uuid
         payload['motor_action'] = self.motor_action.tolist()
+        payload['execution_uuid'] = self.execution_uuid
         return payload
     
     def create_from_json(self, json_dict):
@@ -597,5 +609,6 @@ class ExtractedObjectsIU(retico_core.IncrementalUnit):
         self.payload = self.extracted_objects
         self.flow_uuid = json_dict['flow_uuid']
         self.motor_action = np.array(json_dict['motor_action'])
+        self.execution_uuid = json_dict['execution_uuid']
                 
 
