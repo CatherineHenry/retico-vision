@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -371,7 +372,9 @@ class ExtractObjectsModule(retico_core.AbstractModule):
         self.num_obj_to_display = num_obj_to_display
         self.show = show
         self.keepmask = keepmask
+        self.base_filepath = './extracted_objects'
 
+    # TODO: Catherine, no queue for this Module?
     def process_update(self, update_message):
         print("Extracting objects")
         for iu, ut in update_message:
@@ -444,9 +447,13 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 if not os.path.exists(folder_name):
                     os.makedirs(folder_name)
 
+
                 plt.tight_layout()
-                save_path = os.path.join(folder_name, f'top_extrct_objs_{datetime.now().strftime("%m-%d_%H-%M-%S")}.png')
-                plt.savefig(save_path)
+                path = Path(f"{self.base_filepath}/{obj_type}/{iu.execution_uuid}/top_n_extracted/")
+                path.mkdir(parents=True, exist_ok=True)
+                file_name = f"{iu.flow_uuid}.png" # TODO: png or jpg better?
+                imwrite_path = f"{str(path)}/{file_name}"
+                plt.savefig(imwrite_path)
                 plt.close('all')
 
 
@@ -470,16 +477,16 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 for j in range(num_objs, num_rows * num_cols):
                     axs[j].axis('off')
 
-                folder_name = "possible_extracted_objects"
-                if not os.path.exists(folder_name):
-                    os.makedirs(folder_name)
-
                 plt.tight_layout()
-                save_path = os.path.join(folder_name, f'all_extrct_objs_{datetime.now().strftime("%m-%d_%H-%M-%S")}.png')
-                plt.savefig(save_path)
+                path = Path(f"{self.base_filepath}/{obj_type}/{iu.execution_uuid}/all_possible/")
+                path.mkdir(parents=True, exist_ok=True)
+                file_name = f"{iu.flow_uuid}.png" # TODO: png or jpg better?
+                imwrite_path = f"{str(path)}/{file_name}"
+                plt.savefig(imwrite_path)
                 plt.close('all')
 
-
+            output_iu.set_flow_uuid(iu.flow_uuid)
+            output_iu.set_motor_action(iu.motor_action)
             um = retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD) 
             self.append(um)
 
@@ -556,6 +563,14 @@ class ExtractedObjectsIU(retico_core.IncrementalUnit):
         self.num_objects = 0
         self.object_type = None
         self.extracted_objects = {}
+        self.flow_uuid = None
+        self.motor_action = None
+
+    def set_flow_uuid(self, flow_uuid):
+        self.flow_uuid = flow_uuid
+
+    def set_motor_action(self, motor_action):
+        self.motor_action = motor_action
 
     def set_extracted_objects(self, image, objects_dictionary, num_objects, object_type,):
         """Sets the content for the IU"""
@@ -571,6 +586,8 @@ class ExtractedObjectsIU(retico_core.IncrementalUnit):
         payload['num_objects'] = self.num_objects
         payload['object_type'] = self.object_type
         payload['segmented_objects_dictionary'] = self.extracted_objects
+        payload['flow_uuid'] = self.flow_uuid
+        payload['motor_action'] = self.motor_action.tolist()
         return payload
     
     def create_from_json(self, json_dict):
@@ -578,5 +595,7 @@ class ExtractedObjectsIU(retico_core.IncrementalUnit):
         self.num_objects = json_dict['num_objects']
         self.extracted_objects = json_dict['segmented_objects_dictionary']
         self.payload = self.extracted_objects
+        self.flow_uuid = json_dict['flow_uuid']
+        self.motor_action = np.array(json_dict['motor_action'])
                 
 
