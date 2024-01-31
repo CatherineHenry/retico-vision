@@ -52,6 +52,9 @@ class ImageIU(retico_core.IncrementalUnit):
         self.image = image
         self.rate = rate
         self.nframes = nframes
+        self.flow_uuid = None
+        self.execution_uuid = None
+        self.motor_action = None
 
     def set_image(self, image, nframes, rate):
         """Sets the audio content of the IU."""
@@ -60,11 +63,23 @@ class ImageIU(retico_core.IncrementalUnit):
         self.nframes = int(nframes)
         self.rate = int(rate)
 
+    def set_flow_uuid(self, flow_uuid):
+        self.flow_uuid = flow_uuid
+
+    def set_execution_uuid(self, execution_uuid):
+        self.execution_uuid = execution_uuid
+
+    def set_motor_action(self, motor_action):
+        self.motor_action = motor_action
+
     def get_json(self):
         payload = {}
         payload['image'] = np.array(self.payload).tolist()
         payload['nframes'] = self.nframes
         payload['rate'] = self.rate
+        payload['execution_uuid'] = self.execution_uuid
+        payload['flow_uuid'] = self.flow_uuid
+        payload['motor_action'] = self.motor_action.tolist()
         return payload
 
     def create_from_json(self, json_dict):
