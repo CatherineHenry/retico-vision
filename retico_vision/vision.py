@@ -470,11 +470,6 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                     for j in range(self.num_obj_to_display, num_rows * num_cols):
                         axs[j].axis('off')
 
-                    folder_name = "extracted_objects"
-                    if not os.path.exists(folder_name):
-                        os.makedirs(folder_name)
-
-
                     plt.tight_layout()
                     path = Path(f"{self.base_filepath}/{obj_type}/{iu.execution_uuid}/top_n_extracted/")
                     path.mkdir(parents=True, exist_ok=True)
