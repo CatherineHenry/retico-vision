@@ -552,7 +552,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
 
             ret_image[mask == 0] = [255, 255, 255]
 
-        ret_image = cv2.cvtColor(ret_image, cv2.COLOR_RGB2BGR)
+        # ret_image = cv2.cvtColor(ret_image, cv2.COLOR_RGB2BGR)
         return ret_image 
 
         
