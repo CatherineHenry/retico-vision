@@ -470,11 +470,6 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                     for j in range(self.num_obj_to_display, num_rows * num_cols):
                         axs[j].axis('off')
 
-                    folder_name = "extracted_objects"
-                    if not os.path.exists(folder_name):
-                        os.makedirs(folder_name)
-
-
                     plt.tight_layout()
                     path = Path(f"{self.base_filepath}/{obj_type}/{iu.execution_uuid}/top_n_extracted/")
                     path.mkdir(parents=True, exist_ok=True)
@@ -553,7 +548,8 @@ class ExtractObjectsModule(retico_core.AbstractModule):
             ret_image[mask == 0] = [255, 255, 255]
 
         ret_image = cv2.cvtColor(ret_image, cv2.COLOR_RGB2BGR)
-        return ret_image 
+
+        return ret_image
 
         
 
