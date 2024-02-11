@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-
+import collections
 import cv2
 import numpy as np
 from PIL import Image
@@ -425,6 +425,8 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                     valid_boxes = img_dict['detected_objects']
                     for i in range(num_objs):
                         res_image = self.extract_bb_object(sam_image, valid_boxes[i])
+                        if res_image is None:
+                            continue
                         if self.show:
                             cv2.imshow('image',res_image) 
                             cv2.waitKey(1)
@@ -438,7 +440,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                             continue
                         else:
                             res_image = Image.fromarray(extracted).convert('RGB')
-                        image_objects[f'object_{i+1}'] = res_image
+                        image_objects[f'object_{i+1}'] = res_image # would run faster if I quit the loop here
                     output_iu.set_extracted_objects(image, image_objects, num_objs, obj_type)
                 else: 
                     print('Object type is invalid. Can\'t retrieve segmented object.')
@@ -459,13 +461,15 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                         num_cols = 3
                     fig, axs = plt.subplots(num_rows, num_cols, figsize=(12, 4*num_rows)) #need to adjust to have matching columsn and rows to fit num_obj_to_display
                     axs = axs.ravel() if isinstance(axs, np.ndarray) else [axs]
+                    od = collections.OrderedDict(sorted(image_objects.items(), reverse=True))
 
-                    for idx, i in enumerate(image_objects.keys()):
-                        res_image = image_objects[i]
+                    for idx, i in enumerate(od.keys()):
+                        if idx > self.num_obj_to_display: break
+                        res_image = od[i]
                         if res_image is None:
                             continue
-                        axs[idx].imshow(res_image)
-                        axs[idx].set_title(i)
+                        axs[idx-1].imshow(res_image)
+                        axs[idx-1].set_title(i)
 
                     for j in range(self.num_obj_to_display, num_rows * num_cols):
                         axs[j].axis('off')
@@ -481,9 +485,9 @@ class ExtractObjectsModule(retico_core.AbstractModule):
 
                     # Print possible objects that could have been saved
                     plt.clf()
-                    num_rows = math.ceil(num_objs / 3)
-                    if num_objs < 3:
-                        num_cols = num_objs
+                    num_rows = math.ceil(len(image_objects.keys()) / 3)
+                    if len(image_objects.keys()) < 3:
+                        num_cols = len(image_objects.keys())
                     else:
                         num_cols = 3
                     fig, axs = plt.subplots(num_rows, num_cols, figsize=(12, 4*num_rows)) #need to adjust to have matching columsn and rows to fit num_obj_to_display
@@ -493,8 +497,8 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                         res_image = image_objects[i]
                         if res_image is None:
                             continue
-                        axs[idx].imshow(res_image)
-                        axs[idx].set_title(i)
+                        axs[idx-1].imshow(res_image)
+                        axs[idx-1].set_title(i)
 
                     for j in range(num_objs, num_rows * num_cols):
                         axs[j].axis('off')
@@ -515,12 +519,13 @@ class ExtractObjectsModule(retico_core.AbstractModule):
 
     def extract_seg_object(self, image, seg):
         ret_image = image.copy()
-        ret_image[seg==True] = [255,255,255,0]
+        ret_image[seg==False] = [255,255,255,0]
         avg_color_per_row = np.average(ret_image, axis=0)
         avg_color = np.average(avg_color_per_row, axis=0)
         avg_avg = np.average(avg_color, axis=0)
         print(f"avg of seg obj is: {avg_avg}")
-        if avg_avg >= 200: #TODO: figure out a good threshold
+        # if avg_avg >= 200: #TODO: figure out a good threshold
+        if avg_avg >= 190: # this is if the entire image is masked
             return None
         # ret_image[seg==True] = [255, 255, 255]
         return ret_image
@@ -528,11 +533,15 @@ class ExtractObjectsModule(retico_core.AbstractModule):
     def extract_bb_object(self, image, bbox):
         #return a cut out of the bounding boxed object from the image 
         if not self.keepmask:
+            bbox = [int(val) for val in bbox]
             x, y, w, h = bbox
+            # ret_image = image.copy()
+            # ret_image[seg==True] = [255,255,255,0]
             ret_image = image[y:y+h, x:x+w]
-        else:
+        else: # Does not crop the image, rather keeps original image and whites out the area of the mask
             # keep position of object in image
             mask = np.zeros_like(image)
+            bbox = [int(val) for val in bbox] # cast to ints to circumvent issue with cv2 rect
             x, y, w, h = bbox
 
             cv2.rectangle(mask, (0, 0), (image.shape[1], image.shape[0]), (255, 255, 255), -1)
@@ -547,8 +556,14 @@ class ExtractObjectsModule(retico_core.AbstractModule):
 
             ret_image[mask == 0] = [255, 255, 255]
 
-        ret_image = cv2.cvtColor(ret_image, cv2.COLOR_RGB2BGR)
-
+        # ret_image = cv2.cvtColor(ret_image, cv2.COLOR_RGB2BGR)
+        avg_color_per_row = np.average(ret_image, axis=0)
+        avg_color = np.average(avg_color_per_row, axis=0)
+        avg_avg = np.average(avg_color, axis=0)
+        print(f"avg of seg obj is: {avg_avg}")
+        # if avg_avg >= 200: #TODO: figure out a good threshold
+        if avg_avg >= 191.25: # this is if the entire image is masked
+            return None
         return ret_image
 
         
