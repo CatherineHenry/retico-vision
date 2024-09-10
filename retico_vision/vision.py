@@ -416,9 +416,11 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 num_objs = img_dict['num_objects']
                 # print(f"Num Objects in Vsison: {num_objs}")
 
-                if (self.num_obj_to_display > num_objs):
-                    print("Number of objects detected less than requested. Showing all objects.")
-                    self.num_obj_to_display = num_objs
+                num_obj_to_display = self.num_obj_to_display
+                if (num_obj_to_display > num_objs):
+                    num_obj_to_display = num_objs
+                    print(f"Number of objects detected less than requested [{num_objs} detected]. Showing {num_obj_to_display} objects.")
+
 
                 sam_image = np.array(image) #need image to be in numpy.ndarray format for methods
                 if obj_type == 'bb':
@@ -454,9 +456,9 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 # print(image_objects)
                 else:
                     plt.clf()
-                    num_rows = math.ceil(self.num_obj_to_display / 3)
-                    if self.num_obj_to_display < 3:
-                        num_cols = self.num_obj_to_display
+                    num_rows = math.ceil(num_obj_to_display / 3)
+                    if num_obj_to_display < 3:
+                        num_cols = num_obj_to_display
                     else:
                         num_cols = 3
                     fig, axs = plt.subplots(num_rows, num_cols, figsize=(12, 4*num_rows)) #need to adjust to have matching columsn and rows to fit num_obj_to_display
@@ -464,14 +466,14 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                     od = collections.OrderedDict(sorted(image_objects.items(), reverse=True))
 
                     for idx, i in enumerate(od.keys()):
-                        if idx > self.num_obj_to_display: break
+                        if idx > num_obj_to_display: break
                         res_image = od[i]
                         if res_image is None:
                             continue
                         axs[idx-1].imshow(res_image)
                         axs[idx-1].set_title(i)
 
-                    for j in range(self.num_obj_to_display, num_rows * num_cols):
+                    for j in range(num_obj_to_display, num_rows * num_cols):
                         axs[j].axis('off')
 
                     plt.tight_layout()
