@@ -438,6 +438,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                         if self.show:
                             cv2.imshow('image',res_image) 
                             cv2.waitKey(1)
+                        position_feats = self.compute_position_feats(image, valid_boxes[i])
                         image_objects[f'object_{i+1}'] = res_image
                         image_position_feats[f'object_{i+1}'] = position_feats
                         x1, y1, x2, y2 = [int(val) for val in valid_boxes[i]]
