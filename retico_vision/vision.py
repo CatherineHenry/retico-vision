@@ -470,7 +470,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                     try:
                         res_image.save(imwrite_path)
                     except FileNotFoundError:
-                        print(f"Did not write YOLO output to {imwrite_path}. Check directory exists.")
+                        print(f"Did not write extracted image output to {imwrite_path}. Check directory exists.")
 
                 # else: # TODO: Catherine: The plotting all works but isn't necessary atm
                 #     plt.clf()
@@ -700,3 +700,75 @@ class ExtractedObjectsIU(retico_core.IncrementalUnit):
         self.execution_uuid = json_dict['execution_uuid']
                 
 
+class ObjectPermanenceIU(retico_core.IncrementalUnit):
+    """An object permanence incremental unit that maintains a list of feature vectors for detected objects in a scene.
+
+    Attributes:
+        creator (AbstractModule): The module that created this IU
+        previous_iu (IncrementalUnit): A link to the IU created before the
+            current one.
+        grounded_in (IncrementalUnit): A link to the IU this IU is based on.
+        created_at (float): The UNIX timestamp of the moment the IU is created.
+    """
+
+    @staticmethod
+    def type():
+        return "Object Features IU"
+
+    def __init__(
+            self,
+            creator=None,
+            iuid=0,
+            previous_iu=None,
+            grounded_in=None,
+            **kwargs
+    ):
+        super().__init__(
+            creator=creator,
+            iuid=iuid,
+            previous_iu=previous_iu,
+            grounded_in=grounded_in,
+            payload=None
+        )
+        self.object_features = None
+        self.num_objects = 0
+        self.image = None
+        self.flow_uuid = None
+        self.execution_uuid = None
+        self.motor_action = None
+
+    def set_flow_uuid(self, flow_uuid):
+        self.flow_uuid = flow_uuid
+
+    def set_execution_uuid(self, execution_uuid):
+        self.execution_uuid = execution_uuid
+
+    def set_motor_action(self, motor_action):
+        self.motor_action = motor_action
+
+    def set_object_features(self, image, object_features):
+        """Sets the content of the IU."""
+        self.image = image
+        self.payload = object_features
+        self.object_features = object_features
+        self.num_objects = len(object_features)
+
+    def get_json(self):
+        payload = {}
+        # print(type(self.object_features))
+        payload['image'] = np.array(self.image).tolist()
+        payload['object_features'] = self.object_features
+        payload['num_objects'] = self.num_objects
+        payload['flow_uuid'] = self.flow_uuid
+        payload['motor_action'] = self.motor_action.tolist()
+        payload['execution_uuid'] = self.execution_uuid
+        return payload
+
+    def create_from_json(self, json_dict):
+        self.image =  Image.fromarray(np.array(json_dict['image'], dtype='uint8'))
+        self.object_features = json_dict['object_features']
+        self.payload = json_dict['object_features']
+        self.num_objects = json_dict['num_objects']
+        self.flow_uuid = json_dict['flow_uuid']
+        self.motor_action = np.array(json_dict['motor_action'])
+        self.execution_uuid = json_dict['execution_uuid']
