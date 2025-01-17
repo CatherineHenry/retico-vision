@@ -1,14 +1,11 @@
 from datetime import datetime
 from pathlib import Path
-import collections
 import cv2
 import numpy as np
 from PIL import Image
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import math
-import os
+
 
 import retico_core
 
