@@ -586,21 +586,23 @@ class ExtractObjectsModule(retico_core.AbstractModule):
         return ret_image
     
     def extract_bb_object(self, image, bbox):
+        # Note: Masked and cropped both return np.ndarray of image
+
         #return a cut out of the bounding boxed object from the image 
         if not self.keepmask:
-            bbox = [int(val) for val in bbox]
-            x, y, w, h = bbox
+            # Yolov8 returns bbox as left, top, right, bottom
+            # casting to int does result in some data loss (potentially smaller or bigger bounding box)
+            x1, y1, x2, y2 = [int(val) for val in bbox]
             # ret_image = image.copy()
             # ret_image[seg==True] = [255,255,255,0]
-            ret_image = image[y:y+h, x:x+w]
+            ret_image = image[y1:y2, x1:x2]
         else: # Does not crop the image, rather keeps original image and whites out the area of the mask
             # keep position of object in image
             mask = np.zeros_like(image)
-            bbox = [int(val) for val in bbox] # cast to ints to circumvent issue with cv2 rect
-            x, y, w, h = bbox
+            x1, y1, x2, y2 = [int(val) for val in bbox] # cast to ints to circumvent issue with cv2 rect
 
             cv2.rectangle(mask, (0, 0), (image.shape[1], image.shape[0]), (255, 255, 255), -1)
-            cv2.rectangle(mask, (x, y), (x+w, y+h), (0, 0, 0), -1)
+            cv2.rectangle(mask, (x1, y1), (x2, y2), (0, 0, 0), -1)
 
             mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
             _, mask = cv2.threshold(mask, 1, 255, cv2.THRESH_BINARY)
