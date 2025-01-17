@@ -612,15 +612,15 @@ class ExtractObjectsModule(retico_core.AbstractModule):
             ret_image = cv2.bitwise_and(image, image, mask=mask)
 
             ret_image[mask == 0] = [255, 255, 255]
-
-        # ret_image = cv2.cvtColor(ret_image, cv2.COLOR_RGB2BGR)
-        avg_color_per_row = np.average(ret_image, axis=0)
-        avg_color = np.average(avg_color_per_row, axis=0)
-        avg_avg = np.average(avg_color, axis=0)
-        print(f"avg of seg obj is: {avg_avg}")
-        # if avg_avg >= 200: #TODO: figure out a good threshold
-        if avg_avg >= 191.25: # this is if the entire image is masked
-            return None
+        # Catherine: Changes from working with SAM segments (trying to drop whitespace images)
+        # # ret_image = cv2.cvtColor(ret_image, cv2.COLOR_RGB2BGR)
+        # avg_color_per_row = np.average(ret_image, axis=0)
+        # avg_color = np.average(avg_color_per_row, axis=0)
+        # avg_avg = np.average(avg_color, axis=0)
+        # print(f"avg of seg obj is: {avg_avg}")
+        # # if avg_avg >= 200: #TODO: figure out a good threshold
+        # if avg_avg >= 191.25: # this is if the entire image is masked
+        #     return None
         return ret_image
 
         
