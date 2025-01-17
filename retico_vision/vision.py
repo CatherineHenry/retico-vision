@@ -200,6 +200,7 @@ class ObjectFeaturesIU(retico_core.IncrementalUnit):
         self.object_features = None
         self.num_objects = 0
         self.image = None
+        self.image_bbox = None
         self.flow_uuid = None
         self.execution_uuid = None
         self.motor_action = None
@@ -213,18 +214,20 @@ class ObjectFeaturesIU(retico_core.IncrementalUnit):
     def set_motor_action(self, motor_action):
         self.motor_action = motor_action
 
-    def set_object_features(self, image, object_features):
+    def set_object_features(self, image, object_features, image_bbox):
         """Sets the content of the IU."""
         self.image = image
         self.payload = object_features
         self.object_features = object_features
         self.num_objects = len(object_features)
+        self.image_bbox = image_bbox
 
     def get_json(self):
         payload = {}
         # print(type(self.object_features))
         payload['image'] = np.array(self.image).tolist()
         payload['object_features'] = self.object_features
+        payload['image_bbox'] = self.image_bbox
         payload['num_objects'] = self.num_objects
         payload['flow_uuid'] = self.flow_uuid
         payload['motor_action'] = self.motor_action.tolist()
@@ -232,7 +235,8 @@ class ObjectFeaturesIU(retico_core.IncrementalUnit):
         return payload
 
     def create_from_json(self, json_dict):
-        self.image =  Image.fromarray(np.array(json_dict['image'], dtype='uint8'))
+        self.image = Image.fromarray(np.array(json_dict['image'], dtype='uint8'))
+        self.image_bbox = json_dict['image_bbox']
         self.object_features = json_dict['object_features']
         self.payload = json_dict['object_features']
         self.num_objects = json_dict['num_objects']
@@ -405,6 +409,8 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 continue
             else:
                 image_objects = {}
+                image_position_feats = {}
+                image_bbox = {}
                 output_iu = self.create_iu(iu)
                 print(f"Extracting objects [{iu.flow_uuid}]")
 
@@ -433,7 +439,10 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                             cv2.imshow('image',res_image) 
                             cv2.waitKey(1)
                         image_objects[f'object_{i+1}'] = res_image
-                    output_iu.set_extracted_objects(image, image_objects, num_objs, obj_type)
+                        image_position_feats[f'object_{i+1}'] = position_feats
+                        x1, y1, x2, y2 = [int(val) for val in valid_boxes[i]]
+                        image_bbox = {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'input_img_h': image.height, 'input_img_w': image.width}
+                    output_iu.set_extracted_objects(image, image_objects, num_objs, obj_type, image_position_feats, image_bbox)
                 elif obj_type == 'seg':
                     valid_segs = img_dict['detected_objects']
                     for i in range(num_objs):
@@ -518,6 +527,38 @@ class ExtractObjectsModule(retico_core.AbstractModule):
             output_iu.set_motor_action(iu.motor_action)
             um = retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD) 
             self.append(um)
+
+    def compute_position_feats(self, og_img, bbox):
+
+        bbox = [int(val) for val in bbox]
+        ih = og_img.height
+        iw = og_img.width
+        x, y, w, h = bbox
+        x = int(x)
+        y = int(y)
+        w = int(w)
+        h = int(h)
+        x,y,w,h = bbox
+        # x1, relative
+        x1r = x / iw
+        # y1, relative
+        y1r = y / ih
+        # x2, relative
+        x2r = (x+w) / iw
+        # y2, relative
+        y2r = (y+h) / ih
+        # area
+        area = (w*h) / (iw*ih)
+        # ratio image sides (= orientation)
+        ratio = iw / ih
+        # distance from center (normalised)
+        cx = iw / 2
+        cy = ih / 2
+        bcx = x + w / 2
+        bcy = y + h / 2
+        distance = np.sqrt((bcx-cx)**2 + (bcy-cy)**2) / np.sqrt(cx**2+cy**2)
+        # done!
+        return np.array([x1r,y1r,x2r,y2r,area,ratio,distance]).reshape(1,7)
 
     def extract_seg_object(self, image, seg):
         ret_image = image.copy()
@@ -617,13 +658,15 @@ class ExtractedObjectsIU(retico_core.IncrementalUnit):
     def set_motor_action(self, motor_action):
         self.motor_action = motor_action
 
-    def set_extracted_objects(self, image, objects_dictionary, num_objects, object_type,):
+    def set_extracted_objects(self, image, objects_dictionary, num_objects, object_type, image_position_feats=None, image_bbox=None):
         """Sets the content for the IU"""
         self.image = image
         self.payload = objects_dictionary
         self.num_objects = num_objects
         self.object_type = object_type
         self.extracted_objects = objects_dictionary
+        self.image_position_feats = image_position_feats if image_position_feats is not None else {}
+        self.image_bbox = image_bbox if image_bbox is not None else {}
 
     def get_json(self):
         payload = {}
