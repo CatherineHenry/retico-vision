@@ -428,16 +428,17 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                     print(f"Number of objects detected less than requested [{num_objs} detected]. Showing {num_obj_to_display} objects.")
 
 
-                sam_image = np.array(image) #need image to be in numpy.ndarray format for methods
+                input_image = np.array(image) #need image to be in numpy.ndarray format for methods
                 if obj_type == 'bb':
                     valid_boxes = img_dict['detected_objects']
                     for i in range(num_objs):
-                        res_image = self.extract_bb_object(sam_image, valid_boxes[i])
-                        if res_image is None:
+                        res_image_array = self.extract_bb_object(input_image, valid_boxes[i])
+                        if res_image_array is None:
                             continue
+                        res_image = Image.fromarray(res_image_array)
                         if self.show:
-                            cv2.imshow('image',res_image) 
-                            cv2.waitKey(1)
+                            res_image.show()
+
                         position_feats = self.compute_position_feats(image, valid_boxes[i])
                         image_objects[f'object_{i+1}'] = res_image
                         image_position_feats[f'object_{i+1}'] = position_feats
@@ -447,7 +448,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 elif obj_type == 'seg':
                     valid_segs = img_dict['detected_objects']
                     for i in range(num_objs):
-                        extracted = self.extract_seg_object(sam_image, valid_segs[i])
+                        extracted = self.extract_seg_object(input_image, valid_segs[i])
                         if extracted is None:
                             continue
                         else:
