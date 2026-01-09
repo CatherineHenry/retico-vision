@@ -194,7 +194,7 @@ class ObjectFeaturesIU(retico_core.IncrementalUnit):
             grounded_in=grounded_in,
             payload=None
         )
-        self.object_features = None
+        self.payload = None
         self.num_objects = 0
         self.image = None
         self.image_bbox = None
@@ -211,11 +211,10 @@ class ObjectFeaturesIU(retico_core.IncrementalUnit):
     def set_motor_action(self, motor_action):
         self.motor_action = motor_action
 
-    def set_object_features(self, image, object_features, image_bbox):
+    def set_payload(self, image, object_features, image_bbox):
         """Sets the content of the IU."""
         self.image = image
         self.payload = object_features
-        self.object_features = object_features
         self.num_objects = len(object_features)
         self.image_bbox = image_bbox
 
@@ -223,7 +222,7 @@ class ObjectFeaturesIU(retico_core.IncrementalUnit):
         payload = {}
         # print(type(self.object_features))
         payload['image'] = np.array(self.image).tolist()
-        payload['object_features'] = self.object_features
+        payload['payload'] = self.payload
         payload['image_bbox'] = self.image_bbox
         payload['num_objects'] = self.num_objects
         payload['flow_uuid'] = self.flow_uuid
@@ -234,8 +233,7 @@ class ObjectFeaturesIU(retico_core.IncrementalUnit):
     def create_from_json(self, json_dict):
         self.image = Image.fromarray(np.array(json_dict['image'], dtype='uint8'))
         self.image_bbox = json_dict['image_bbox']
-        self.object_features = json_dict['object_features']
-        self.payload = json_dict['object_features']
+        self.payload = json_dict['object_features'] # Catherine TODO: keep object features for now until update on server end
         self.num_objects = json_dict['num_objects']
         self.flow_uuid = json_dict['flow_uuid']
         self.motor_action = np.array(json_dict['motor_action'])
@@ -659,6 +657,7 @@ class ExtractedObjectsIU(retico_core.IncrementalUnit):
         self.flow_uuid = None
         self.execution_uuid = None
         self.motor_action = None
+        self.image_bbox = None
 
     def set_flow_uuid(self, flow_uuid):
         self.flow_uuid = flow_uuid
@@ -730,7 +729,8 @@ class ObjectPermanenceIU(retico_core.IncrementalUnit):
             grounded_in=grounded_in,
             payload=None
         )
-        self.object_features = None
+        self.object_distance = -1
+        self.payload = None # object features
         self.num_objects = 0
         self.image = None
         self.flow_uuid = None
@@ -746,29 +746,32 @@ class ObjectPermanenceIU(retico_core.IncrementalUnit):
     def set_motor_action(self, motor_action):
         self.motor_action = motor_action
 
-    def set_object_features(self, image, object_features):
+    def set_payload(self, image, object_features):
         """Sets the content of the IU."""
         self.image = image
         self.payload = object_features
-        self.object_features = object_features
         self.num_objects = len(object_features)
+
+    def set_object_distance(self, distance_mm):
+        self.object_distance = distance_mm
 
     def get_json(self):
         payload = {}
         # print(type(self.object_features))
         payload['image'] = np.array(self.image).tolist()
-        payload['object_features'] = self.object_features
+        payload['payload'] = self.payload # object features
         payload['num_objects'] = self.num_objects
         payload['flow_uuid'] = self.flow_uuid
         payload['motor_action'] = self.motor_action.tolist()
         payload['execution_uuid'] = self.execution_uuid
+        payload['object_distance'] = self.object_distance
         return payload
 
     def create_from_json(self, json_dict):
         self.image =  Image.fromarray(np.array(json_dict['image'], dtype='uint8'))
-        self.object_features = json_dict['object_features']
-        self.payload = json_dict['object_features']
+        self.payload = json_dict['payload']
         self.num_objects = json_dict['num_objects']
         self.flow_uuid = json_dict['flow_uuid']
         self.motor_action = np.array(json_dict['motor_action'])
         self.execution_uuid = json_dict['execution_uuid']
+        self.object_distance = json_dict['object_distance']
