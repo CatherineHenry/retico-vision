@@ -233,7 +233,7 @@ class ObjectFeaturesIU(retico_core.IncrementalUnit):
     def create_from_json(self, json_dict):
         self.image = Image.fromarray(np.array(json_dict['image'], dtype='uint8'))
         self.image_bbox = json_dict['image_bbox']
-        self.payload = json_dict['object_features'] # Catherine TODO: keep object features for now until update on server end
+        self.payload = json_dict['payload']
         self.num_objects = json_dict['num_objects']
         self.flow_uuid = json_dict['flow_uuid']
         self.motor_action = np.array(json_dict['motor_action'])
