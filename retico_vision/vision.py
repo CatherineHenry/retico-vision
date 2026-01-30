@@ -712,7 +712,7 @@ class ObjectPermanenceIU(retico_core.IncrementalUnit):
 
     @staticmethod
     def type():
-        return "Object Features IU"
+        return "Object Permanence IU"
 
     def __init__(
             self,
@@ -730,9 +730,7 @@ class ObjectPermanenceIU(retico_core.IncrementalUnit):
             payload=None
         )
         self.object_distance = -1
-        self.payload = None # object features
-        self.num_objects = 0
-        self.image = None
+        self.payload = None
         self.flow_uuid = None
         self.execution_uuid = None
         self.motor_action = None
@@ -746,32 +744,15 @@ class ObjectPermanenceIU(retico_core.IncrementalUnit):
     def set_motor_action(self, motor_action):
         self.motor_action = motor_action
 
-    def set_payload(self, image, object_features):
+    def set_payload(self, distance_mm, obj_x1, obj_y1, obj_x2, obj_y2, orig_img_width):
         """Sets the content of the IU."""
-        self.image = image
-        self.payload = object_features
-        self.num_objects = len(object_features)
+        self.payload = {'distance_mm': distance_mm,
+                        'obj_x1': obj_x1,
+                        'obj_y1': obj_y1,
+                        'obj_x2': obj_x2,
+                        'obj_y2': obj_y2,
+                        'orig_img_width': orig_img_width
+                        }
 
     def set_object_distance(self, distance_mm):
         self.object_distance = distance_mm
-
-    def get_json(self):
-        payload = {}
-        # print(type(self.object_features))
-        payload['image'] = np.array(self.image).tolist()
-        payload['payload'] = self.payload # object features
-        payload['num_objects'] = self.num_objects
-        payload['flow_uuid'] = self.flow_uuid
-        payload['motor_action'] = self.motor_action.tolist()
-        payload['execution_uuid'] = self.execution_uuid
-        payload['object_distance'] = self.object_distance
-        return payload
-
-    def create_from_json(self, json_dict):
-        self.image =  Image.fromarray(np.array(json_dict['image'], dtype='uint8'))
-        self.payload = json_dict['payload']
-        self.num_objects = json_dict['num_objects']
-        self.flow_uuid = json_dict['flow_uuid']
-        self.motor_action = np.array(json_dict['motor_action'])
-        self.execution_uuid = json_dict['execution_uuid']
-        self.object_distance = json_dict['object_distance']
