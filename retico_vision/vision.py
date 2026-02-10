@@ -729,7 +729,6 @@ class ObjectPermanenceIU(retico_core.IncrementalUnit):
             grounded_in=grounded_in,
             payload=None
         )
-        self.object_distance = -1
         self.payload = None
         self.flow_uuid = None
         self.execution_uuid = None
@@ -753,6 +752,3 @@ class ObjectPermanenceIU(retico_core.IncrementalUnit):
                         'obj_y2': obj_y2,
                         'orig_img_width': orig_img_width
                         }
-
-    def set_object_distance(self, distance_mm):
-        self.object_distance = distance_mm
