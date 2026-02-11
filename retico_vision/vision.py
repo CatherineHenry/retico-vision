@@ -1,9 +1,10 @@
-from datetime import datetime
 from pathlib import Path
+
 import cv2
+import matplotlib
 import numpy as np
 from PIL import Image
-import matplotlib
+
 matplotlib.use('Agg')
 
 
@@ -372,7 +373,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
 
     @staticmethod
     def description():
-        return "A module that produces iamges of individual objects from segmentations produced by SAM or Yolo."
+        return "A module that produces images of individual objects from segmentations produced by SAM or Yolo."
 
     @staticmethod
     def input_ius():
@@ -409,13 +410,12 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 output_iu = self.create_iu(iu)
                 print(f"Extracting objects [{iu.flow_uuid}]")
 
-                img_dict = iu.get_json()
                 image = iu.image
                 # image = cv2.cvtColor(image, cv2.COLOR_RGB2RGBA)
                 image = image.convert('RGBA')
-                obj_type = img_dict['object_type']
-                num_objs = img_dict['num_objects']
-                # print(f"Num Objects in Vsison: {num_objs}")
+                num_objs = iu.num_objects
+                obj_type = iu.object_type
+                # print(f"Num Objects in Vision: {num_objs}")
 
                 num_obj_to_display = self.num_obj_to_display
                 if (num_obj_to_display > num_objs):
@@ -425,7 +425,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
 
                 input_image = np.array(image) #need image to be in numpy.ndarray format for methods
                 if obj_type == 'bb':
-                    valid_boxes = img_dict['detected_objects']
+                    valid_boxes = iu.detected_objects
                     for i in range(num_objs):
                         res_image_array = self.extract_bb_object(input_image, valid_boxes[i])
                         if res_image_array is None:
@@ -441,7 +441,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                         image_bbox = {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'input_img_h': image.height, 'input_img_w': image.width}
                     output_iu.set_extracted_objects(image, image_objects, num_objs, obj_type, image_position_feats, image_bbox)
                 elif obj_type == 'seg':
-                    valid_segs = img_dict['detected_objects']
+                    valid_segs = iu.detected_objects
                     for i in range(num_objs):
                         extracted = self.extract_seg_object(input_image, valid_segs[i])
                         if extracted is None:
