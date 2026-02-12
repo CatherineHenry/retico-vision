@@ -136,34 +136,6 @@ class DetectedObjectsIU(retico_core.IncrementalUnit):
         self.num_objects = len(detected_objects)
         self.object_type = object_type
 
-    def get_json(self):
-        payload = {}
-        payload['image'] = np.array(self.payload).tolist() #just sets image to be the list of objects 
-        payload['detected_objects'] = self.detected_objects
-        payload['num_objects'] = self.num_objects
-        payload['object_type'] = self.object_type
-        payload['flow_uuid'] = self.flow_uuid
-        payload['execution_uuid'] = self.execution_uuid
-        payload['motor_action'] = self.motor_action.tolist()
-        return payload
-
-    def create_from_json(self, json_dict):
-        self.image =  Image.fromarray(np.array(json_dict['image'], dtype='uint8'))
-        self.detected_objects = json_dict['detected_objects']
-        self.payload = self.detected_objects
-        self.num_objects = json_dict['num_objects']
-        self.flow_uuid = json_dict['flow_uuid']
-        self.execution_uuid = json_dict['execution_uuid']
-        self.motor_action = np.array(json_dict['motor_action'])
-
-    def set_flow_uuid(self, flow_uuid):
-        self.flow_uuid = flow_uuid
-
-    def set_execution_uuid(self, execution_uuid):
-        self.execution_uuid = execution_uuid
-
-    def set_motor_action(self, motor_action):
-        self.motor_action = motor_action
 
 class ObjectFeaturesIU(retico_core.IncrementalUnit):
     """An image incremental unit that maintains a list of feature vectors for detected objects in a scene.
@@ -752,3 +724,53 @@ class ObjectPermanenceIU(retico_core.IncrementalUnit):
                         'obj_y2': obj_y2,
                         'orig_img_width': orig_img_width
                         }
+
+
+
+class CozmoNavigationMemoryMapIU(retico_core.IncrementalUnit):
+    """A cozmo navigation memory map incremental unit that maintains the latest navigation memory map state from the Cozmo engine.
+
+    Attributes:
+        creator (AbstractModule): The module that created this IU
+        previous_iu (IncrementalUnit): A link to the IU created before the
+            current one.
+        grounded_in (IncrementalUnit): A link to the IU this IU is based on.
+        created_at (float): The UNIX timestamp of the moment the IU is created.
+    """
+
+    @staticmethod
+    def type():
+        return "Cozmo Navigation Memory Map IU"
+
+    def __init__(
+            self,
+            creator=None,
+            iuid=0,
+            previous_iu=None,
+            grounded_in=None,
+            **kwargs
+    ):
+        super().__init__(
+            creator=creator,
+            iuid=iuid,
+            previous_iu=previous_iu,
+            grounded_in=grounded_in,
+            payload=None
+        )
+        self.payload = None
+        self.flow_uuid = None
+        self.execution_uuid = None
+        self.motor_action = None
+
+    def set_flow_uuid(self, flow_uuid):
+        self.flow_uuid = flow_uuid
+
+    def set_execution_uuid(self, execution_uuid):
+        self.execution_uuid = execution_uuid
+
+    def set_motor_action(self, motor_action):
+        self.motor_action = motor_action
+
+    def set_payload(self, nav_memory_map):
+        """Sets the content of the IU."""
+        self.payload = nav_memory_map
