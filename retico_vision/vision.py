@@ -51,9 +51,7 @@ class ImageIU(retico_core.IncrementalUnit):
         self.image = image
         self.rate = rate
         self.nframes = nframes
-        self.flow_uuid = None
-        self.execution_uuid = None
-        self.motor_action = None
+
 
     def set_image(self, image, nframes, rate):
         """Sets the audio content of the IU."""
@@ -62,23 +60,12 @@ class ImageIU(retico_core.IncrementalUnit):
         self.nframes = int(nframes)
         self.rate = int(rate)
 
-    def set_flow_uuid(self, flow_uuid):
-        self.flow_uuid = flow_uuid
-
-    def set_execution_uuid(self, execution_uuid):
-        self.execution_uuid = execution_uuid
-
-    def set_motor_action(self, motor_action):
-        self.motor_action = motor_action
 
     def get_json(self):
         payload = {}
         payload['image'] = np.array(self.payload).tolist()
         payload['nframes'] = self.nframes
         payload['rate'] = self.rate
-        payload['execution_uuid'] = self.execution_uuid
-        payload['flow_uuid'] = self.flow_uuid
-        payload['motor_action'] = self.motor_action.tolist()
         return payload
 
     def create_from_json(self, json_dict):
@@ -86,9 +73,7 @@ class ImageIU(retico_core.IncrementalUnit):
         self.payload = self.image
         self.nframes = json_dict['nframes']
         self.rate = json_dict['rate']
-        self.flow_uuid = json_dict['flow_uuid']
-        self.execution_uuid = json_dict['execution_uuid']
-        self.motor_action = np.array(json_dict['motor_action'])
+
 
 class DetectedObjectsIU(retico_core.IncrementalUnit):
     """An image incremental unit that maintains a list of detected objects and their bounding boxes.
@@ -124,9 +109,7 @@ class DetectedObjectsIU(retico_core.IncrementalUnit):
         self.detected_objects = None
         self.num_objects = 0
         self.object_type = None
-        self.flow_uuid = None
-        self.execution_uuid = None
-        self.motor_action = None
+
 
     def set_detected_objects(self, image, detected_objects, object_type):
         """Sets the content for the IU"""
@@ -171,18 +154,7 @@ class ObjectFeaturesIU(retico_core.IncrementalUnit):
         self.num_objects = 0
         self.image = None
         self.image_bbox = None
-        self.flow_uuid = None
-        self.execution_uuid = None
-        self.motor_action = None
 
-    def set_flow_uuid(self, flow_uuid):
-        self.flow_uuid = flow_uuid
-
-    def set_execution_uuid(self, execution_uuid):
-        self.execution_uuid = execution_uuid
-
-    def set_motor_action(self, motor_action):
-        self.motor_action = motor_action
 
     def set_payload(self, image, object_features, image_bbox):
         """Sets the content of the IU."""
@@ -208,9 +180,7 @@ class ObjectFeaturesIU(retico_core.IncrementalUnit):
         self.image_bbox = json_dict['image_bbox']
         self.payload = json_dict['payload']
         self.num_objects = json_dict['num_objects']
-        self.flow_uuid = json_dict['flow_uuid']
-        self.motor_action = np.array(json_dict['motor_action'])
-        self.execution_uuid = json_dict['execution_uuid']
+
 
 class WebcamModule(retico_core.AbstractProducingModule):
     """A module that produces IUs containing images that are captures by
@@ -501,9 +471,6 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 #     plt.savefig(imwrite_path)
                 #     plt.close('all')
 
-            output_iu.set_flow_uuid(iu.flow_uuid)
-            output_iu.set_execution_uuid(iu.execution_uuid)
-            output_iu.set_motor_action(iu.motor_action)
             um = retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD) 
             self.append(um)
 
@@ -626,19 +593,8 @@ class ExtractedObjectsIU(retico_core.IncrementalUnit):
         self.num_objects = 0
         self.object_type = None
         self.extracted_objects = {}
-        self.flow_uuid = None
-        self.execution_uuid = None
-        self.motor_action = None
         self.image_bbox = None
 
-    def set_flow_uuid(self, flow_uuid):
-        self.flow_uuid = flow_uuid
-
-    def set_execution_uuid(self, execution_uuid):
-        self.execution_uuid = execution_uuid
-
-    def set_motor_action(self, motor_action):
-        self.motor_action = motor_action
 
     def set_extracted_objects(self, image, objects_dictionary, num_objects, object_type, image_position_feats=None, image_bbox=None):
         """Sets the content for the IU"""
@@ -666,9 +622,6 @@ class ExtractedObjectsIU(retico_core.IncrementalUnit):
         self.num_objects = json_dict['num_objects']
         self.extracted_objects = json_dict['segmented_objects_dictionary']
         self.payload = self.extracted_objects
-        self.flow_uuid = json_dict['flow_uuid']
-        self.motor_action = np.array(json_dict['motor_action'])
-        self.execution_uuid = json_dict['execution_uuid']
                 
 
 class ObjectPermanenceIU(retico_core.IncrementalUnit):
@@ -702,18 +655,7 @@ class ObjectPermanenceIU(retico_core.IncrementalUnit):
             payload=None
         )
         self.payload = None
-        self.flow_uuid = None
-        self.execution_uuid = None
-        self.motor_action = None
 
-    def set_flow_uuid(self, flow_uuid):
-        self.flow_uuid = flow_uuid
-
-    def set_execution_uuid(self, execution_uuid):
-        self.execution_uuid = execution_uuid
-
-    def set_motor_action(self, motor_action):
-        self.motor_action = motor_action
 
     def set_payload(self, distance_mm, obj_x1, obj_y1, obj_x2, obj_y2, orig_img_width):
         """Sets the content of the IU."""
@@ -758,18 +700,7 @@ class CozmoNavigationMemoryMapIU(retico_core.IncrementalUnit):
             payload=None
         )
         self.payload = None
-        self.flow_uuid = None
-        self.execution_uuid = None
-        self.motor_action = None
 
-    def set_flow_uuid(self, flow_uuid):
-        self.flow_uuid = flow_uuid
-
-    def set_execution_uuid(self, execution_uuid):
-        self.execution_uuid = execution_uuid
-
-    def set_motor_action(self, motor_action):
-        self.motor_action = motor_action
 
     def set_payload(self, nav_memory_map):
         """Sets the content of the IU."""
