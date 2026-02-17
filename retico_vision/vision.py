@@ -170,9 +170,6 @@ class ObjectFeaturesIU(retico_core.IncrementalUnit):
         payload['payload'] = self.payload
         payload['image_bbox'] = self.image_bbox
         payload['num_objects'] = self.num_objects
-        payload['flow_uuid'] = self.flow_uuid
-        payload['motor_action'] = self.motor_action.tolist()
-        payload['execution_uuid'] = self.execution_uuid
         return payload
 
     def create_from_json(self, json_dict):
@@ -350,7 +347,9 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 image_position_feats = {}
                 image_bbox = {}
                 output_iu = self.create_iu(iu)
-                print(f"Extracting objects [{iu.flow_uuid}]")
+                execution_uuid = iu.meta_data.get('execution_uuid')
+                flow_uuid = iu.meta_data.get('flow_uuid')
+                print(f"Extracting objects [{flow_uuid}]")
 
                 image = iu.image
                 # image = cv2.cvtColor(image, cv2.COLOR_RGB2RGBA)
@@ -397,15 +396,15 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                     exit()
                 # if all(value is None for value in image_objects.values()):
                 if len(image_objects.keys()) == 0:
-                    print(f"No images with object [{iu.flow_uuid}]")
+                    print(f"No images with object [{flow_uuid}]")
                     output_iu.set_extracted_objects(image, [], 0, obj_type)
                     # um = retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD)
                     # self.append(um)
                 # print(image_objects)
                 else:
-                    path = Path(f"{self.base_filepath}/{obj_type}/{iu.execution_uuid}/extracted/")
+                    path = Path(f"{self.base_filepath}/{obj_type}/{execution_uuid}/extracted/")
                     path.mkdir(parents=True, exist_ok=True)
-                    file_name = f"{iu.flow_uuid}.png" # TODO: png or jpg better?
+                    file_name = f"{flow_uuid}.png" # TODO: png or jpg better?
                     imwrite_path = f"{str(path)}/{file_name}"
                     try:
                         res_image.save(imwrite_path)
