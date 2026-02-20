@@ -349,6 +349,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 output_iu = self.create_iu(iu)
                 execution_uuid = iu.meta_data.get('execution_uuid')
                 flow_uuid = iu.meta_data.get('flow_uuid')
+                date_timestamp = iu.meta_data.get('date_timestamp')
                 print(f"Extracting objects [{flow_uuid}]")
 
                 image = iu.image
@@ -402,7 +403,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                     # self.append(um)
                 # print(image_objects)
                 else:
-                    path = Path(f"{self.base_filepath}/{obj_type}/{execution_uuid}/extracted/")
+                    path = Path(f"{self.base_filepath}/{date_timestamp}/{obj_type}/{execution_uuid}/extracted/")
                     path.mkdir(parents=True, exist_ok=True)
                     file_name = f"{flow_uuid}.png" # TODO: png or jpg better?
                     imwrite_path = f"{str(path)}/{file_name}"
