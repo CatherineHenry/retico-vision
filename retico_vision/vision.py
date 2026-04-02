@@ -223,6 +223,7 @@ class WebcamModule(retico_core.AbstractProducingModule):
                 frame2 = np.asarray(frame)
                 cv2.imwrite("./test_webcam_img.jpg", frame2)
             output_iu.set_image(frame, 1, self.rate)
+            output_iu.meta_data= {'execution_uuid': 'test', 'flow_uuid': 'test'}
             return retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD)
             # um = retico_core.UpdateMessage.from_iu(output_iu, retico_core.UpdateType.ADD)
             # self.append(um)
