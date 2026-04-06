@@ -4,6 +4,9 @@ import cv2
 import matplotlib
 import numpy as np
 from PIL import Image
+from opentelemetry import trace
+
+tracer = trace.get_tracer("my.tracer.name")
 
 matplotlib.use('Agg')
 
@@ -339,6 +342,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
         self.base_filepath = './extraction_output'
 
     # TODO: Catherine, no queue for this Module?
+    @tracer.start_as_current_span("extract_objects")
     def process_update(self, update_message):
         for iu, ut in update_message:
             if ut != retico_core.UpdateType.ADD:
@@ -351,7 +355,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 execution_uuid = iu.meta_data.get('execution_uuid')
                 flow_uuid = iu.meta_data.get('flow_uuid')
                 date_timestamp = iu.meta_data.get('date_timestamp')
-                print(f"Extracting objects [{flow_uuid}]")
+                print(f"[{flow_uuid}] Extracting objects")
 
                 image = iu.image
                 # image = cv2.cvtColor(image, cv2.COLOR_RGB2RGBA)
@@ -363,7 +367,7 @@ class ExtractObjectsModule(retico_core.AbstractModule):
                 num_obj_to_display = self.num_obj_to_display
                 if (num_obj_to_display > num_objs):
                     num_obj_to_display = num_objs
-                    print(f"Number of objects detected less than requested [{num_objs} detected]. Showing {num_obj_to_display} objects.")
+                    print(f"[{flow_uuid}] Number of objects detected less than requested [{num_objs} detected]. Showing {num_obj_to_display} objects.")
 
 
                 input_image = np.array(image) #need image to be in numpy.ndarray format for methods
