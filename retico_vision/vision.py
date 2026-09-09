@@ -710,3 +710,40 @@ class CozmoNavigationMemoryMapIU(retico_core.IncrementalUnit):
     def set_payload(self, nav_memory_map):
         """Sets the content of the IU."""
         self.payload = nav_memory_map
+
+class VectorNavigationMemoryMapIU(retico_core.IncrementalUnit):
+    """A cozmo navigation memory map incremental unit that maintains the latest navigation memory map state from the Vector engine.
+
+    Attributes:
+        creator (AbstractModule): The module that created this IU
+        previous_iu (IncrementalUnit): A link to the IU created before the
+            current one.
+        grounded_in (IncrementalUnit): A link to the IU this IU is based on.
+        created_at (float): The UNIX timestamp of the moment the IU is created.
+    """
+
+    @staticmethod
+    def type():
+        return "Vector Navigation Memory Map IU"
+
+    def __init__(
+            self,
+            creator=None,
+            iuid=0,
+            previous_iu=None,
+            grounded_in=None,
+            **kwargs
+    ):
+        super().__init__(
+            creator=creator,
+            iuid=iuid,
+            previous_iu=previous_iu,
+            grounded_in=grounded_in,
+            payload=None
+        )
+        self.payload = None
+
+
+    def set_payload(self, nav_memory_map):
+        """Sets the content of the IU."""
+        self.payload = nav_memory_map
